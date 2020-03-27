@@ -1,3 +1,4 @@
+// Sleep mode
 
 // PIN MAPPING
 const byte PIN_RED = 0;
@@ -16,9 +17,18 @@ byte STATE = STATE_TRACKING;
 const byte MAX_TICKS = 40;			// Ticking at 2hz so 40 = 20 sec
 byte ticks;							// Nr 0.5s blinks done so far
 
+void beep( byte times = 1, uint32_t usec = 1000 ){
 
-// Todo: Add beeper
+	for( byte i=0; i<times; ++i ){
+		
+		digitalWrite(PIN_BUZZER, HIGH);
+		delayMicroseconds(usec);
+		digitalWrite(PIN_BUZZER, LOW);
+		delayMicroseconds(usec);
 
+	}
+
+}
 
 void setup(){
 
@@ -60,6 +70,7 @@ void loop(){
 			// Turn on half red
 			++STATE;
 			analogWrite(PIN_RED, 50);
+			beep(1, 10000);
 
 		}
 		else if( !near && STATE == STATE_FOUND ){
@@ -93,6 +104,7 @@ void loop(){
 
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
+		beep(2, 100000);
 		delay(3000);								// Todo: sleep?
 		STATE = STATE_TRACKING;	 // Reset to basic
 		digitalWrite(PIN_GREEN, LOW);
