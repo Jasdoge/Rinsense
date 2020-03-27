@@ -1,4 +1,38 @@
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
+
 // Sleep mode
+#define SLEEP_025S 0b000100
+#define SLEEP_05S 0b000101
+#define SLEEP_1S 0b000110
+#define SLEEP_2S 0b000111
+#define SLEEP_4S 0b100000
+#define SLEEP_8S 0b100001
+
+
+#define adc_disable() ADCSRA &= ~ bit(ADEN) // disable ADC (before power-off)
+#define adc_enable()  (ADCSRA |=  (1<<ADEN)) // re-enable ADC
+
+ISR(PCINT0_vect){}
+ISR(WDT_vect) {
+	wdt_disable();  // disable watchdog
+}
+
+void sleep( byte dur = SLEEP_1S ){
+	
+	MCUSR = 0;                          // reset various flags
+	WDTCR |= 0b00011000;               // see docs, set WDCE, WDE
+	WDTCR =  0b01000000 | dur;    // set WDIE, and 4s delay
+	wdt_reset();
+
+	// Enters sleep mode
+    sleep_enable();                          // enables the sleep bit in the mcucr register so sleep is possible
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);    // replaces above statement
+	sleep_mode();
+
+}
+
 
 // PIN MAPPING
 const byte PIN_RED = 0;
@@ -32,6 +66,7 @@ void beep( byte times = 1, uint32_t usec = 1000 ){
 
 void setup(){
 
+	adc_disable();
 	pinMode(PIN_GREEN, OUTPUT);
 	pinMode(PIN_RED, OUTPUT);
 	pinMode(PIN_BUZZER, OUTPUT);
@@ -61,9 +96,9 @@ void loop(){
 	if( STATE == STATE_TRACKING || STATE == STATE_FOUND ){
 
 		digitalWrite(PIN_IR_OUT, HIGH);
-		delayMicroseconds(10);
+		delay(1);
 		bool near = digitalRead(PIN_IR_IN);
-		digitalWrite(PIN_IR_IN, LOW);
+		digitalWrite(PIN_IR_OUT, LOW);
 
 		if( near && STATE == STATE_TRACKING ){
 			
@@ -82,9 +117,9 @@ void loop(){
 
 		// State might have moved on beyond these, which is why it's an else if instead of else
 		if( STATE == STATE_TRACKING )
-			delay(1000);							// Todo: Replace with sleep
+			sleep();		
 		else if( STATE == STATE_FOUND )
-			delay(100);								// Todo: Replace with sleep
+			delay(33);	// Can't sleep here because of PWM
 
 	}
 
@@ -92,7 +127,7 @@ void loop(){
 
 		++ticks;
 		digitalWrite(PIN_RED, !(ticks%2) );			// Tick on even
-		delay(500);									// Todo: Sleep?
+		sleep(SLEEP_05S);
 
 		// Finished ticking
 		if( ticks >= MAX_TICKS )
@@ -105,7 +140,7 @@ void loop(){
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
 		beep(2, 100000);
-		delay(3000);								// Todo: sleep?
+		sleep(SLEEP_4S);
 		STATE = STATE_TRACKING;	 // Reset to basic
 		digitalWrite(PIN_GREEN, LOW);
 
