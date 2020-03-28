@@ -50,6 +50,8 @@ byte STATE = STATE_TRACKING;
 
 const byte MAX_TICKS = 40;			// Ticking at 2hz so 40 = 20 sec
 byte ticks;							// Nr 0.5s blinks done so far
+byte pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
+const byte PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
 
 void beep( byte times = 1, uint32_t usec = 1000 ){
 
@@ -80,11 +82,11 @@ void setup(){
 
 	// Diode test
 	digitalWrite(PIN_GREEN, HIGH);
-	delay(100);
+	delay(500);
 	digitalWrite(PIN_RED, HIGH);
-	delay(100);
+	delay(500);
 	digitalWrite(PIN_GREEN, LOW);
-	delay(100);
+	delay(500);
 	digitalWrite(PIN_RED, LOW);
 	
 
@@ -104,11 +106,12 @@ void loop(){
 			
 			// Turn on half red
 			++STATE;
-			analogWrite(PIN_RED, 50);
+			analogWrite(PIN_RED, 5);
 			beep(1, 10000);
+			pump_held = 0;
 
 		}
-		else if( !near && STATE == STATE_FOUND ){
+		else if( (!near || ++pump_held >= PUMP_HELD_MAX ) && STATE == STATE_FOUND ){
 			
 			++STATE;
 			ticks = 0;	// reset ticks
@@ -119,7 +122,7 @@ void loop(){
 		if( STATE == STATE_TRACKING )
 			sleep();		
 		else if( STATE == STATE_FOUND )
-			delay(33);	// Can't sleep here because of PWM
+			delay(100);	// Can't sleep here because of PWM
 
 	}
 
