@@ -107,7 +107,7 @@ void loop(){
 			// Turn on half red
 			++STATE;
 			analogWrite(PIN_RED, 5);
-			beep(1, 10000);
+			beep(1, 20000);
 			pump_held = 0;
 
 		}
@@ -120,7 +120,7 @@ void loop(){
 
 		// State might have moved on beyond these, which is why it's an else if instead of else
 		if( STATE == STATE_TRACKING )
-			sleep();		
+			sleep(SLEEP_05S);		
 		else if( STATE == STATE_FOUND )
 			delay(100);	// Can't sleep here because of PWM
 
@@ -142,7 +142,7 @@ void loop(){
 
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
-		beep(2, 100000);
+		beep(2, 200000);
 		sleep(SLEEP_4S);
 		STATE = STATE_TRACKING;	 // Reset to basic
 		digitalWrite(PIN_GREEN, LOW);
