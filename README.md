@@ -10,6 +10,8 @@ Parts list:
 
 Main circuit:
 
+![Components needed](https://raw.githubusercontent.com/Jasdoge/Rinsense/master/pics/suggested_parts.jpg)
+
 | Name | Description | Amount | Example in a store |
 |---|---|---|---|
 | B+ / B- | DC jack | 1 | https://www.aliexpress.com/item/32760333770.html |
@@ -56,12 +58,17 @@ Compile using Arduino. Make sure you burn the bootloader beforehand. I set the i
 
 ## 3d Printing
 
+![Printed parts](https://raw.githubusercontent.com/Jasdoge/Rinsense/master/pics/printed_parts.jpg)
+
 * Circuitry contains subfolders to the meshes.
 * Folders prefixed with mmu_ are multi-material prints. You can ignore the colored parts of them if you don't have an MMU printer, and use stickers instead. Though for the charger I suggest using a transparent filament so you can see the LED indicator. The charger was designed for one of these boards https://www.aliexpress.com/item/32650239370.html
 * I didn't need any supports while printing. Using layer height 0.15MM
-
+* The front panel should be black or at least a dark color to prevent the IR LED to activate through the material.
 
 ### Main box:
+
+![Suggested front panel rigging](https://raw.githubusercontent.com/Jasdoge/Rinsense/master/pics/front_panel.jpg)
+![Suggested top layout](https://raw.githubusercontent.com/Jasdoge/Rinsense/master/pics/top_layout.jpg)
 
 * Start by putting the IR diodes into the holes at the bottom of the front plate. Then put the DC plug in the square cutout on the left side, note the cable channel.
 * You can use hot glue to keep the DC socket in place.
