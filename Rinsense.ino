@@ -53,14 +53,14 @@ byte ticks;							// Nr 0.5s blinks done so far
 byte pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
 const byte PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
 
-void beep( byte times = 1, uint32_t usec = 1000 ){
+void beep( byte times = 1, uint16_t ms = 1 ){
 
 	for( byte i=0; i<times; ++i ){
 		
 		digitalWrite(PIN_BUZZER, HIGH);
-		delayMicroseconds(usec);
+		delay(ms);
 		digitalWrite(PIN_BUZZER, LOW);
-		delayMicroseconds(usec);
+		delay(ms);
 
 	}
 
@@ -107,7 +107,7 @@ void loop(){
 			// Turn on half red
 			++STATE;
 			analogWrite(PIN_RED, 5);
-			beep(1, 20000);
+			beep(1, 25);
 			pump_held = 0;
 
 		}
@@ -142,7 +142,7 @@ void loop(){
 
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
-		beep(2, 200000);
+		beep(2, 50);
 		sleep(SLEEP_4S);
 		STATE = STATE_TRACKING;	 // Reset to basic
 		digitalWrite(PIN_GREEN, LOW);
