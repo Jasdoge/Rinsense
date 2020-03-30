@@ -1,3 +1,4 @@
+// Include AVR sleep stuff
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <avr/power.h>
@@ -10,15 +11,16 @@
 #define SLEEP_4S 0b100000
 #define SLEEP_8S 0b100001
 
-
+// Macros to toggle ADC (turn off for lower battery consumption)
 #define adc_disable() ADCSRA &= ~ bit(ADEN) // disable ADC (before power-off)
 #define adc_enable()  (ADCSRA |=  (1<<ADEN)) // re-enable ADC
 
-ISR(PCINT0_vect){}
+// Needed to handle wakeups
 ISR(WDT_vect) {
 	wdt_disable();  // disable watchdog
 }
 
+// Enter sleep mode
 void sleep( byte dur = SLEEP_1S ){
 	
 	MCUSR = 0;                          // reset various flags
@@ -42,6 +44,8 @@ const byte PIN_IR_OUT = 2;
 const byte PIN_IR_IN = 3;
 const byte PIN_BUZZER = 4;
 
+
+// The program cycle runs in states. These are them:
 const byte STATE_TRACKING = 0;		// Search for hands!
 const byte STATE_FOUND = 1;			// Found hands! Waiting for hands to be removed (caaaarl)
 const byte STATE_TIMER = 2;			// Hands removed, blink the red LEDs on and off in a clock motion
@@ -53,6 +57,7 @@ byte ticks;							// Nr 0.5s blinks done so far
 byte pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
 const byte PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
 
+// Beep the speaker n times for x milliseconds
 void beep( byte times = 1, uint16_t ms = 1 ){
 
 	for( byte i=0; i<times; ++i ){
@@ -68,7 +73,10 @@ void beep( byte times = 1, uint16_t ms = 1 ){
 
 void setup(){
 
+	// Saves battery
 	adc_disable();
+
+	// Setup pin defaults
 	pinMode(PIN_GREEN, OUTPUT);
 	pinMode(PIN_RED, OUTPUT);
 	pinMode(PIN_BUZZER, OUTPUT);
@@ -80,7 +88,7 @@ void setup(){
 	digitalWrite(PIN_BUZZER, LOW);
 	digitalWrite(PIN_IR_OUT, LOW);
 
-	// Diode test
+	// Diode test (flash green -> yellow -> red)
 	digitalWrite(PIN_GREEN, HIGH);
 	delay(500);
 	digitalWrite(PIN_RED, HIGH);
@@ -126,6 +134,7 @@ void loop(){
 
 	}
 
+	// Blinking for 20 seconds
 	if( STATE == STATE_TIMER ){
 
 		++ticks;
@@ -138,6 +147,7 @@ void loop(){
 
 	}
 
+	// Show green, and then reset
 	if( STATE == STATE_DONE ){
 
 		digitalWrite(PIN_RED, LOW);
