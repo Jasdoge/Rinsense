@@ -22,7 +22,8 @@ ISR(WDT_vect) {
 
 // Enter sleep mode
 void sleep( byte dur = SLEEP_1S ){
-	
+
+	adc_disable();	
 	MCUSR = 0;                          // reset various flags
 	WDTCR |= 0b00011000;               // see docs, set WDCE, WDE
 	WDTCR =  0b01000000 | dur;    // set WDIE, and 4s delay
@@ -33,6 +34,8 @@ void sleep( byte dur = SLEEP_1S ){
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);    // replaces above statement
 	sleep_mode();
 
+	adc_enable();
+
 }
 
 
@@ -42,6 +45,7 @@ const byte PIN_GREEN = 1;
 
 const byte PIN_IR_OUT = 2;
 const byte PIN_IR_IN = 3;
+#define PIN_IR_IN_A A3
 const byte PIN_BUZZER = 4;
 
 
@@ -73,8 +77,7 @@ void beep( byte times = 1, uint16_t ms = 1 ){
 
 void setup(){
 
-	// Saves battery
-	adc_disable();
+	adc_enable();
 
 	// Setup pin defaults
 	pinMode(PIN_GREEN, OUTPUT);
@@ -105,9 +108,11 @@ void loop(){
 	// Find presence of hands
 	if( STATE == STATE_TRACKING || STATE == STATE_FOUND ){
 
+		delay(1);
+		int reading = analogRead(PIN_IR_IN_A);
 		digitalWrite(PIN_IR_OUT, HIGH);
 		delay(1);
-		bool near = digitalRead(PIN_IR_IN);
+		bool near = analogRead(PIN_IR_IN_A)-reading > 100;
 		digitalWrite(PIN_IR_OUT, LOW);
 
 		if( near && STATE == STATE_TRACKING ){
