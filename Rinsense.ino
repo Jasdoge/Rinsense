@@ -52,11 +52,14 @@ const byte PIN_BUZZER = 4;
 // The program cycle runs in states. These are them:
 const byte STATE_TRACKING = 0;		// Search for hands!
 const byte STATE_FOUND = 1;			// Found hands! Waiting for hands to be removed (caaaarl)
-const byte STATE_TIMER = 2;			// Hands removed, blink the red LEDs on and off in a clock motion
-const byte STATE_DONE = 3;			// All done! Glow green! Good job!
+const byte STATE_SOAP = 2;			// Hands removed, blink the red LEDs to signify it's time to soap up
+const byte STATE_RINSE = 3;			// Time to rinse, blink yellow LEDs on and off 
+const byte STATE_DONE = 4;			// All done! Glow green! Good job!
 byte STATE = STATE_TRACKING;
 
-const byte MAX_TICKS = 40;			// Ticking at 2hz so 40 = 20 sec
+const byte MAX_TICKS_SOAP = 30;			// Ticking at 2hz so 40 = 20 sec
+const byte MAX_TICKS_RINSE = 20;		// Same as above. 10 = 5 sec
+
 byte ticks;							// Nr 0.5s blinks done so far
 byte pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
 const byte PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
@@ -140,15 +143,25 @@ void loop(){
 	}
 
 	// Blinking for 20 seconds
-	if( STATE == STATE_TIMER ){
+	if( STATE == STATE_SOAP || STATE == STATE_RINSE ){
+
+		const uint8_t mt = STATE == STATE_SOAP ? MAX_TICKS_SOAP : MAX_TICKS_RINSE;
 
 		++ticks;
 		digitalWrite(PIN_RED, !(ticks%2) );			// Tick on even
+		digitalWrite(PIN_GREEN, !(ticks%2) && STATE == STATE_RINSE );			// Tick on even
 		sleep(SLEEP_05S);
 
 		// Finished ticking
-		if( ticks >= MAX_TICKS )
+		if( ticks >= mt ){
+			
+			if( STATE == STATE_SOAP )
+				beep(2, 25);
+
 			++STATE;
+			ticks = 0;
+
+		}
 
 	}
 
@@ -157,7 +170,7 @@ void loop(){
 
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
-		beep(2, 50);
+		beep(5, 50);
 		sleep(SLEEP_4S);
 		STATE = STATE_TRACKING;	 // Reset to basic
 		digitalWrite(PIN_GREEN, LOW);
