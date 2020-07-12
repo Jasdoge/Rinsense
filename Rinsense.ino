@@ -15,13 +15,15 @@
 #define adc_disable() ADCSRA &= ~ bit(ADEN) // disable ADC (before power-off)
 #define adc_enable()  (ADCSRA |=  (1<<ADEN)) // re-enable ADC
 
+
+
 // Needed to handle wakeups
 ISR(WDT_vect) {
 	wdt_disable();  // disable watchdog
 }
 
 // Enter sleep mode
-void sleep( byte dur = SLEEP_1S ){
+void sleep( uint8_t dur = SLEEP_1S ){
 
 	adc_disable();	
 	MCUSR = 0;                          // reset various flags
@@ -39,35 +41,38 @@ void sleep( byte dur = SLEEP_1S ){
 }
 
 
+
 // PIN MAPPING
-const byte PIN_RED = 0;
-const byte PIN_GREEN = 1;
+const uint8_t PIN_RED = 1;
+const uint8_t PIN_GREEN = 0;
 
-const byte PIN_IR_OUT = 2;
-const byte PIN_IR_IN = 3;
+const uint8_t PIN_IR_OUT = 2;
+const uint8_t PIN_IR_IN = 3;
 #define PIN_IR_IN_A A3
-const byte PIN_BUZZER = 4;
+const uint8_t PIN_BUZZER = 4;
 
+
+const uint8_t IR_SENSITIVITY = 20;
 
 // The program cycle runs in states. These are them:
-const byte STATE_TRACKING = 0;		// Search for hands!
-const byte STATE_FOUND = 1;			// Found hands! Waiting for hands to be removed (caaaarl)
-const byte STATE_SOAP = 2;			// Hands removed, blink the red LEDs to signify it's time to soap up
-const byte STATE_RINSE = 3;			// Time to rinse, blink yellow LEDs on and off 
-const byte STATE_DONE = 4;			// All done! Glow green! Good job!
-byte STATE = STATE_TRACKING;
+const uint8_t STATE_TRACKING = 0;		// Search for hands!
+const uint8_t STATE_FOUND = 1;			// Found hands! Waiting for hands to be removed (caaaarl)
+const uint8_t STATE_SOAP = 2;			// Hands removed, blink the red LEDs to signify it's time to soap up
+const uint8_t STATE_RINSE = 3;			// Time to rinse, blink yellow LEDs on and off 
+const uint8_t STATE_DONE = 4;			// All done! Glow green! Good job!
+uint8_t STATE = STATE_TRACKING;
 
-const byte MAX_TICKS_SOAP = 30;			// Ticking at 2hz so 40 = 20 sec
-const byte MAX_TICKS_RINSE = 20;		// Same as above. 10 = 5 sec
+const uint8_t MAX_TICKS_SOAP = 30;			// Ticking at 2hz so 30 = 15 sec
+const uint8_t MAX_TICKS_RINSE = 30;		// Same as above, but for the rinse state
 
-byte ticks;							// Nr 0.5s blinks done so far
-byte pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
-const byte PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
+uint8_t ticks;							// Nr 0.5s blinks done so far
+uint8_t pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
+const uint8_t PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
 
 // Beep the speaker n times for x milliseconds
-void beep( byte times = 1, uint16_t ms = 1 ){
+void beep( uint8_t times = 1, uint16_t ms = 1 ){
 
-	for( byte i=0; i<times; ++i ){
+	for( uint8_t i=0; i<times; ++i ){
 		
 		digitalWrite(PIN_BUZZER, HIGH);
 		delay(ms);
@@ -115,7 +120,7 @@ void loop(){
 		int reading = analogRead(PIN_IR_IN_A);
 		digitalWrite(PIN_IR_OUT, HIGH);
 		delay(1);
-		bool near = analogRead(PIN_IR_IN_A)-reading > 100;
+		bool near = analogRead(PIN_IR_IN_A)-reading > IR_SENSITIVITY;
 		digitalWrite(PIN_IR_OUT, LOW);
 
 		if( near && STATE == STATE_TRACKING ){
