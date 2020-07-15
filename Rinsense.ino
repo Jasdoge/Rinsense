@@ -52,22 +52,21 @@ const uint8_t PIN_IR_IN = 3;
 const uint8_t PIN_BUZZER = 4;
 
 
-const uint8_t IR_SENSITIVITY = 20;
+const uint8_t IR_SENSITIVITY = 22;
 
 // The program cycle runs in states. These are them:
 const uint8_t STATE_TRACKING = 0;		// Search for hands!
-const uint8_t STATE_FOUND = 1;			// Found hands! Waiting for hands to be removed (caaaarl)
-const uint8_t STATE_SOAP = 2;			// Hands removed, blink the red LEDs to signify it's time to soap up
-const uint8_t STATE_RINSE = 3;			// Time to rinse, blink yellow LEDs on and off 
-const uint8_t STATE_DONE = 4;			// All done! Glow green! Good job!
+const uint8_t STATE_SOAP = 1;			// Hands removed, blink the red LEDs to signify it's time to soap up
+const uint8_t STATE_RINSE = 2;			// Time to rinse, blink yellow LEDs on and off 
+const uint8_t STATE_DONE = 3;			// All done! Glow green! Good job!
+const uint8_t STATE_RESET = 4;			// Waiting for hands to be removed, just to prevent shenanigans
+
 uint8_t STATE = STATE_TRACKING;
 
 const uint8_t MAX_TICKS_SOAP = 30;			// Ticking at 2hz so 30 = 15 sec
 const uint8_t MAX_TICKS_RINSE = 30;		// Same as above, but for the rinse state
 
-uint8_t ticks;							// Nr 0.5s blinks done so far
-uint8_t pump_held;						// Nr cycles you've held your hands in front of the pump. (This is to prevent the "warn" light from getting stuck)
-const uint8_t PUMP_HELD_MAX = 100;		// Each cycle is 1/10th of a second. So 10 = 1 sec
+uint8_t ticks;							// Tracks the flashing timer
 
 // Beep the speaker n times for x milliseconds
 void beep( uint8_t times = 1, uint16_t ms = 1 ){
@@ -111,39 +110,47 @@ void setup(){
 
 }
 
+bool handsPresent(){
+
+	// Take 3 readings
+	for( uint8_t i = 0; i < 3; ++i ){
+
+		int16_t base = analogRead(PIN_IR_IN_A);			// Take a baseline IR reading
+		digitalWrite(PIN_IR_OUT, HIGH);
+		delay(1);	// Wait a bit for LED to fully turn on
+		
+		int16_t onReading = analogRead(PIN_IR_IN_A);
+		digitalWrite(PIN_IR_OUT, LOW);
+
+		if( onReading-base < IR_SENSITIVITY )
+			return false;
+		
+		delay(1);
+
+	}
+	return true;
+	
+}
+
 void loop(){
 
 	// Find presence of hands
-	if( STATE == STATE_TRACKING || STATE == STATE_FOUND ){
+	if( STATE == STATE_TRACKING ){
 
-		delay(1);
-		int reading = analogRead(PIN_IR_IN_A);
-		digitalWrite(PIN_IR_OUT, HIGH);
-		delay(1);
-		bool near = analogRead(PIN_IR_IN_A)-reading > IR_SENSITIVITY;
-		digitalWrite(PIN_IR_OUT, LOW);
+		bool hands = handsPresent();
+		if( !hands ){
 
-		if( near && STATE == STATE_TRACKING ){
-			
-			// Turn on half red
-			++STATE;
-			analogWrite(PIN_RED, 5);
-			beep(1, 25);
-			pump_held = 0;
-
-		}
-		else if( (!near || ++pump_held >= PUMP_HELD_MAX ) && STATE == STATE_FOUND ){
-			
-			++STATE;
-			ticks = 0;	// reset ticks
+			sleep(SLEEP_05S);
+			return;
 
 		}
 
-		// State might have moved on beyond these, which is why it's an else if instead of else
-		if( STATE == STATE_TRACKING )
-			sleep(SLEEP_05S);		
-		else if( STATE == STATE_FOUND )
-			delay(100);	// Can't sleep here because of PWM
+		digitalWrite(PIN_IR_OUT, LOW);	// Disable sensor LED, sleep also does this
+
+		analogWrite(PIN_RED, 5);
+		beep(1, 25);
+		++STATE;
+		ticks = 0;
 
 	}
 
@@ -176,9 +183,27 @@ void loop(){
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
 		beep(5, 50);
+		
+		// Stay green for 4 sec
 		sleep(SLEEP_4S);
-		STATE = STATE_TRACKING;	 // Reset to basic
+		++STATE;
 		digitalWrite(PIN_GREEN, LOW);
+
+	}
+
+	// Wait for low
+	if( STATE == STATE_RESET ){
+
+		if( !handsPresent() ){
+			
+			STATE = STATE_TRACKING;
+			return;
+
+		}
+
+		// Hands are present, wait until they're removed
+		sleep(SLEEP_1S);
+		
 
 	}
 
