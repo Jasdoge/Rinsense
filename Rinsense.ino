@@ -49,8 +49,6 @@ const uint8_t PIN_GREEN = 0;
 const uint8_t PIN_IR_OUT = 2;
 const uint8_t PIN_IR_IN = 3;
 #define PIN_IR_IN_A A3
-const uint8_t PIN_BUZZER = 4;
-
 
 const uint8_t IR_SENSITIVITY = 22;
 
@@ -68,20 +66,6 @@ const uint8_t MAX_TICKS_RINSE = 30;		// Same as above, but for the rinse state
 
 uint8_t ticks;							// Tracks the flashing timer
 
-// Beep the speaker n times for x milliseconds
-void beep( uint8_t times = 1, uint16_t ms = 1 ){
-
-	for( uint8_t i=0; i<times; ++i ){
-		
-		digitalWrite(PIN_BUZZER, HIGH);
-		delay(ms);
-		digitalWrite(PIN_BUZZER, LOW);
-		delay(ms);
-
-	}
-
-}
-
 void setup(){
 
 	adc_enable();
@@ -89,13 +73,11 @@ void setup(){
 	// Setup pin defaults
 	pinMode(PIN_GREEN, OUTPUT);
 	pinMode(PIN_RED, OUTPUT);
-	pinMode(PIN_BUZZER, OUTPUT);
 	pinMode(PIN_IR_OUT, OUTPUT);
 	pinMode(PIN_IR_IN, INPUT);
 
 	digitalWrite(PIN_GREEN, LOW);
 	digitalWrite(PIN_RED, LOW);
-	digitalWrite(PIN_BUZZER, LOW);
 	digitalWrite(PIN_IR_OUT, LOW);
 
 	// Diode test (flash green -> yellow -> red)
@@ -112,8 +94,8 @@ void setup(){
 
 bool handsPresent(){
 
-	// Take 3 readings
-	for( uint8_t i = 0; i < 3; ++i ){
+	// Take 5 readings
+	for( uint8_t i = 0; i < 5; ++i ){
 
 		int16_t base = analogRead(PIN_IR_IN_A);			// Take a baseline IR reading
 		digitalWrite(PIN_IR_OUT, HIGH);
@@ -148,7 +130,6 @@ void loop(){
 		digitalWrite(PIN_IR_OUT, LOW);	// Disable sensor LED, sleep also does this
 
 		analogWrite(PIN_RED, 5);
-		beep(1, 25);
 		++STATE;
 		ticks = 0;
 
@@ -166,9 +147,6 @@ void loop(){
 
 		// Finished ticking
 		if( ticks >= mt ){
-			
-			if( STATE == STATE_SOAP )
-				beep(2, 25);
 
 			++STATE;
 			ticks = 0;
@@ -182,8 +160,7 @@ void loop(){
 
 		digitalWrite(PIN_RED, LOW);
 		digitalWrite(PIN_GREEN, HIGH);
-		beep(5, 50);
-		
+
 		// Stay green for 4 sec
 		sleep(SLEEP_4S);
 		++STATE;
