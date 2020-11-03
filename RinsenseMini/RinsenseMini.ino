@@ -23,6 +23,9 @@ const uint8_t PIN_IR_OUT = 4;
 const uint8_t PIN_BIGPP = 3;
 const uint8_t PIN_NEO_DTA = 2;
 
+const uint8_t IR_SENSITIVITY = 30;
+bool finished = true;
+
 // Needs to be a divisor of 5 and 2
 const uint8_t BRIGHTNESS = 50;
 
@@ -30,7 +33,7 @@ const uint8_t NUM_LEDS = 12;
 uint8_t pixels[NUM_LEDS*3];
 tinyNeoPixel leds = tinyNeoPixel(NUM_LEDS, PIN_NEO_DTA, NEO_GRB, pixels);
 
-uint8_t timeLeft = 24;
+uint8_t timeLeft = 0;
 
 
 void setPixel( uint8_t nr, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0 ){
@@ -54,11 +57,51 @@ void colorCycle( uint8_t r = 0, uint8_t g = 0, uint8_t b = 0 ){
 
 		setPixel(i, r, g, b);
 		leds.show();
-		delay(25);
+		delay(35);
 
 	}
 }
 
+// Helper function that draws a percentage, nr being 0-12
+void drawRange( uint8_t nr, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0 ){
+	
+	for( uint8_t i = 0; i < NUM_LEDS; ++i ){
+
+		if( nr > i )
+			setPixel(i, r, g, b);
+		else
+			setPixel(i);
+
+	}
+
+	leds.show();
+	
+}
+
+
+
+bool handsPresent(){
+
+
+	// Take 5 readings
+	for( uint8_t i = 0; i < 5; ++i ){
+
+		int16_t base = analogRead(0);			// Take a baseline IR reading
+		digitalWrite(PIN_IR_OUT, HIGH);
+		delay(2);
+		int16_t onReading = analogRead(0);
+		digitalWrite(PIN_IR_OUT, LOW);
+		if( onReading-base < IR_SENSITIVITY )
+			return false;
+		
+		
+		delay(5);
+
+
+	}
+	return true;
+	
+}
 
 void bigpp( bool on = false ){
 	digitalWrite(PIN_BIGPP, on ? LOW : HIGH);
@@ -72,6 +115,7 @@ void sleep(){
 }
 
 void setup(){
+
 
 	/* Initialize RTC: */
   	while (RTC.STATUS > 0){}
@@ -97,12 +141,13 @@ void setup(){
 	setPixels(0,0,50);
 	delay(100);
 	setPixels();
-	delay(1000);
+	delay(100);
 
 }
 
 
 void loop(){
+
 
 	// Clocking
 	if( timeLeft ){
@@ -167,7 +212,7 @@ void loop(){
 
 				setPixel(i);
 				leds.show();
-				delay(25);
+				delay(35);
 
 			}
 			
@@ -177,7 +222,20 @@ void loop(){
 
 	}
 	
+	// Prevents restarting until the sensor is unblocked
+	const bool hands = handsPresent();
+	if( hands && finished ){
+		timeLeft = 24;
+		finished = false;
+		bigpp(true);
+		return;
+	}
+	else if( !hands && !finished )
+		finished = true;
+	
+
 	sleep();
+	
 
 }
 
