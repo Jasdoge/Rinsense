@@ -43,14 +43,14 @@ void sleep( uint8_t dur = SLEEP_1S ){
 
 
 // PIN MAPPING
-const uint8_t PIN_RED = 1;
-const uint8_t PIN_GREEN = 0;
+const uint8_t PIN_RED = 0;
+const uint8_t PIN_GREEN = 1;
 
 const uint8_t PIN_IR_OUT = 2;
 const uint8_t PIN_IR_IN = 3;
 #define PIN_IR_IN_A A3
 
-const uint8_t IR_SENSITIVITY = 22;
+const uint8_t IR_SENSITIVITY = 30;
 
 // The program cycle runs in states. These are them:
 const uint8_t STATE_TRACKING = 0;		// Search for hands!
@@ -61,10 +61,32 @@ const uint8_t STATE_RESET = 4;			// Waiting for hands to be removed, just to pre
 
 uint8_t STATE = STATE_TRACKING;
 
-const uint8_t MAX_TICKS_SOAP = 30;			// Ticking at 2hz so 30 = 15 sec
-const uint8_t MAX_TICKS_RINSE = 30;		// Same as above, but for the rinse state
+const uint8_t MAX_TICKS_SOAP = 28;			// Ticking at 2hz so 30 = 15 sec
+const uint8_t MAX_TICKS_RINSE = 28;		// Same as above, but for the rinse state
 
 uint8_t ticks;							// Tracks the flashing timer
+
+bool handsPresent(){
+
+	// Take 5 readings
+	for( uint8_t i = 0; i < 5; ++i ){
+
+		int16_t base = analogRead(PIN_IR_IN_A);			// Take a baseline IR reading
+		digitalWrite(PIN_IR_OUT, HIGH);
+		delay(2);	// Wait a bit for LED to fully turn on
+		
+		int16_t onReading = analogRead(PIN_IR_IN_A);
+		digitalWrite(PIN_IR_OUT, LOW);
+
+		if( onReading-base < IR_SENSITIVITY )
+			return false;
+		
+		delay(5);
+
+	}
+	return true;
+	
+}
 
 void setup(){
 
@@ -92,27 +114,6 @@ void setup(){
 
 }
 
-bool handsPresent(){
-
-	// Take 5 readings
-	for( uint8_t i = 0; i < 5; ++i ){
-
-		int16_t base = analogRead(PIN_IR_IN_A);			// Take a baseline IR reading
-		digitalWrite(PIN_IR_OUT, HIGH);
-		delay(1);	// Wait a bit for LED to fully turn on
-		
-		int16_t onReading = analogRead(PIN_IR_IN_A);
-		digitalWrite(PIN_IR_OUT, LOW);
-
-		if( onReading-base < IR_SENSITIVITY )
-			return false;
-		
-		delay(1);
-
-	}
-	return true;
-	
-}
 
 void loop(){
 
