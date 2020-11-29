@@ -1,10 +1,3 @@
-/*
-
-	Todo: 
-	- Test power draw
-	
-*/
-
 #include <tinyNeoPixel_Static.h>
 #include <avr/sleep.h>
 
@@ -12,7 +5,7 @@ ISR(RTC_PIT_vect){
 	RTC.PITINTFLAGS = RTC_PI_bm;
 }
 
-const uint8_t PIN_CHRG_STAT = 1;
+const uint8_t PIN_BAT_LV = 1;
 const uint8_t PIN_IR_IN = 0;
 const uint8_t PIN_IR_OUT = 4;
 const uint8_t PIN_BIGPP = 3;
@@ -117,7 +110,7 @@ void setup(){
   	while (RTC.STATUS > 0){}
   	RTC.CLKSEL = RTC_CLKSEL_INT32K_gc;    /* 32.768kHz Internal Ultra-Low-Power Oscillator (OSCULP32K) */
   	RTC.PITINTCTRL = RTC_PI_bm;           /* PIT Interrupt: enabled */
-  	RTC.PITCTRLA = RTC_PERIOD_CYC32768_gc /* RTC Clock Cycles = 1Hz */
+  	RTC.PITCTRLA = RTC_PERIOD_CYC16384_gc /* RTC Clock Cycles = 2Hz */
   	| RTC_PITEN_bm;  
 
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -126,7 +119,7 @@ void setup(){
 	pinMode(PIN_BIGPP, OUTPUT);
 	pinMode(PIN_IR_OUT, OUTPUT);
 	pinMode(PIN_IR_IN, INPUT);
-	pinMode(PIN_CHRG_STAT, INPUT);
+	pinMode(PIN_BAT_LV, INPUT);
 	pinMode(PIN_NEO_DTA, OUTPUT);
 
 	
@@ -144,23 +137,10 @@ void setup(){
 
 void loop(){
 
-	// Check if charging
-	if( !digitalRead(PIN_CHRG_STAT) ){
+	// Todo: warn on low battery level
+	// const uint16_t charge = analogRead(PIN_CHRG_STAT);
 
-		bigpp(true);
-		timeLeft = 0;
-		finished = true;
-		if( ++chargeDot >= 12 )
-			chargeDot = 0;
-
-		for( uint8_t i = 0; i < 12; ++i )
-			setPixel(i, chargeDot == i ? 10 : 0);
-
-		leds.show();
-		delay(100);
-		return;
-	}
-
+	
 	// Clocking
 	if( timeLeft ){
 
@@ -207,7 +187,7 @@ void loop(){
 		leds.show();
 
 		
-		delay(1000);
+		delay(1100);
 
 
 		if( timeLeft == 0 ){
@@ -241,6 +221,32 @@ void loop(){
 		timeLeft = 24;
 		finished = false;
 		bigpp(true);
+
+		// Check battery
+		const float BAT_DIVIDER_A = 1000;	// kiloohm
+		const float BAT_DIVIDER_B = 294;	// k
+		const float BAT_MAX = 4.2;
+		float voltage = (analogRead(PIN_BAT_LV)+0.5)*BAT_MAX/1024.0; // Get actual voltage on pin
+		voltage *= (BAT_DIVIDER_A+BAT_DIVIDER_B)/BAT_DIVIDER_B;    // Ratio is (R1+R2)/R2, so multiply by that to get the actual voltage
+		if( voltage < 3 ){
+
+			// Blink red
+			setPixels(BRIGHTNESS/2);
+			delay(250);
+			setPixels();
+			delay(250);
+			setPixels(BRIGHTNESS/2);
+			delay(250);
+			setPixels();
+			delay(250);
+			setPixels(BRIGHTNESS/2);
+			delay(250);
+			setPixels();
+			delay(250);
+			
+		}
+
+
 		return;
 
 	}
