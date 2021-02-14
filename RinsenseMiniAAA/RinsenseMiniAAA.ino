@@ -218,7 +218,7 @@ void loop(){
 		finished = false;
 		bigpp(true);
 
-		delay(10);	// Either keep this in or add a 10uF capacitor. It draws too much power otherwise.
+		delay(10);
 
 		// Fade in
 		for( uint8_t i = 0; i < BRIGHTNESS; ++i ){
