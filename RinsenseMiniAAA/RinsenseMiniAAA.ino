@@ -15,7 +15,7 @@ const uint8_t IR_SENSITIVITY = 30;
 bool finished = true;
 
 // Needs to be a divisor of 5 and 2
-const uint8_t BRIGHTNESS = 150;
+const uint8_t BRIGHTNESS = 100;
 
 const uint8_t NUM_LEDS = 12;
 uint8_t pixels[NUM_LEDS*3];
@@ -136,10 +136,6 @@ void setup(){
 
 
 void loop(){
-
-	// Todo: warn on low battery level
-	// const uint16_t charge = analogRead(PIN_CHRG_STAT);
-
 	
 	// Clocking
 	if( timeLeft ){
@@ -222,12 +218,23 @@ void loop(){
 		finished = false;
 		bigpp(true);
 
+		delay(10);	// Either keep this in or add a 10uF capacitor. It draws too much power otherwise.
+
+		// Fade in
+		for( uint8_t i = 0; i < BRIGHTNESS; ++i ){
+
+			setPixels(i+1);
+			delay(2);
+			
+		}
+
 		// Check battery
 		const float BAT_DIVIDER_A = 1000;	// kiloohm
 		const float BAT_DIVIDER_B = 294;	// k
 		const float BAT_MAX = 4.2;
 		float voltage = (analogRead(PIN_BAT_LV)+0.5)*BAT_MAX/1024.0; // Get actual voltage on pin
 		voltage *= (BAT_DIVIDER_A+BAT_DIVIDER_B)/BAT_DIVIDER_B;    // Ratio is (R1+R2)/R2, so multiply by that to get the actual voltage
+
 		if( voltage < 3 ){
 
 			// Blink red
