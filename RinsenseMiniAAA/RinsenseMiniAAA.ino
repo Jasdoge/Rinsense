@@ -1,3 +1,8 @@
+/*
+	Notes:
+	- 20mhz is REQUIRED
+	- BOD is optional since replaceable batteries
+*/
 #include <tinyNeoPixel_Static.h>
 #include <avr/sleep.h>
 
