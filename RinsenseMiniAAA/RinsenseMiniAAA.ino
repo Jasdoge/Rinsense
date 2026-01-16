@@ -119,7 +119,7 @@ void loop(){
 
 		const bool roundOne = (timeLeft >= 12);
 		const uint8_t sub = timeLeft%12;
-		
+
 		for( uint8_t i = 0; i < NUM_LEDS; ++i ){
 
 
@@ -162,10 +162,8 @@ void loop(){
 
 		if( timeLeft == 0 ){
 
-
-			
-			const uint8_t NUM_SEGS = 30;
-			const uint8_t NUM_FLARES = 3;
+			const uint8_t NUM_SEGS = 20;
+			const uint8_t NUM_FLARES = 5;
 			const uint8_t LEDS_PER_BLOCK = NUM_LEDS/2;
 			const float pixelDist = 1.0f/LEDS_PER_BLOCK;
 
@@ -197,7 +195,7 @@ void loop(){
 						if( led ){ // First one is top diode, always 0
 							localPerc = (float)(led) / LEDS_PER_BLOCK;
 							if( led > 6 ){
-								localPerc = 1.0f - (float)(led-5)/LEDS_PER_BLOCK;
+								localPerc = 1.0f - (float)(led-6)/LEDS_PER_BLOCK;
 							}
 						}
 
